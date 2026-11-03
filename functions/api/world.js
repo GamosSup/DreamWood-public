@@ -2,16 +2,17 @@
 const API='https://bvlwpfmtcdgfsomvwqrp.supabase.co', KEY='sb_publishable_S7nnUv3hs2bBZDhYhEFYew_j_S6s1sO';
 const FEEDS=[['Hotel News Resource · мир','https://www.hotelnewsresource.com/feeds/latest.xml'],['Hotel News Resource · Европа','https://www.hotelnewsresource.com/feeds/region/europe.xml'],['Hotel News Resource · Азия','https://www.hotelnewsresource.com/feeds/region/asia.xml'],['Hotel News Resource · Ближний Восток','https://www.hotelnewsresource.com/feeds/region/middle.xml'],['Hotel News Resource · Америка','https://www.hotelnewsresource.com/feeds/region/north.xml'],['Hospitality Net','https://www.hospitalitynet.org/rss/news.xml'],['Attractions','https://www.amusementsandattractions.com/rss/attractions/news'],['Attractions Magazine','https://attractionsmagazine.com/feed/'],['Disney Parks Blog','https://disneyparksblog.com/feed/'],['blooloop','https://blooloop.com/feed/']];
 const EVENT=/\b(event|festival|festive|celebration|celebrates|concert|show|parade|holiday|halloween|christmas|carnival|performance|theatre|theater|activity|activities|kids club|family program|family experience|workshop)\b/i;
+const TRADE_EVENT=/\b(trade show|hospitality show|conference|summit|investor|earnings|revenue|industry event|business event|executive|stock listing)\b/i;
 const clean=s=>String(s||'').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/\s+/g,' ').trim();
 const tag=(s,t)=>{const m=s.match(new RegExp('<'+t+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/'+t+'>','i'));return m?clean(m[1]):''};
-export function parseFeed(xml,source){return [...String(xml).matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].map(m=>{let title=tag(m[1],'title'),url=tag(m[1],'link'),date=tag(m[1],'pubDate');let ts=Date.parse(date);if(!title||!/^https:\/\//i.test(url)||!Number.isFinite(ts))return null;return {title:title.slice(0,260),url,source,date:new Date(ts).toISOString(),event:EVENT.test(title)}}).filter(Boolean)}
+export function parseFeed(xml,source){return [...String(xml).matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].map(m=>{let title=tag(m[1],'title'),url=tag(m[1],'link'),date=tag(m[1],'pubDate');let ts=Date.parse(date);if(!title||!/^https:\/\//i.test(url)||!Number.isFinite(ts)||ts<Date.now()-45*864e5||ts>Date.now()+864e5)return null;return {title:title.slice(0,260),url,source,date:new Date(ts).toISOString(),event:EVENT.test(title)&&!TRADE_EVENT.test(title)}}).filter(Boolean)}
 const response=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'private, no-store','x-content-type-options':'nosniff'}});
 let cache={at:0,items:[],failed:[]};
 let refreshing=null;
 async function translateHeadlines(items,ai){
  if(!ai)return items;
- let cursor=0;const out=items.map(x=>({...x}));
- const worker=async()=>{while(cursor<Math.min(out.length,60)){const i=cursor++;try{const r=await ai.run('@cf/meta/m2m100-1.2b',{text:out[i].title,source_lang:'en',target_lang:'ru'});if(typeof r?.translated_text==='string'&&r.translated_text.trim())out[i].title_ru=r.translated_text.trim().slice(0,400)}catch(e){}}};
+ let cursor=0;const out=items.map(x=>({...x})),indices=[...new Set([...out.map((_,i)=>i).slice(0,60),...out.map((x,i)=>x.event?i:-1).filter(i=>i>=0).slice(0,60)])];
+ const worker=async()=>{while(cursor<indices.length){const i=indices[cursor++];for(let attempt=0;attempt<3;attempt++){try{const r=await ai.run('@cf/meta/m2m100-1.2b',{text:out[i].title,source_lang:'en',target_lang:'ru'});if(typeof r?.translated_text==='string'&&r.translated_text.trim()){out[i].title_ru=r.translated_text.trim().slice(0,400);break}}catch(e){}if(attempt<2)await new Promise(resolve=>setTimeout(resolve,300*(attempt+1)))}}};
  await Promise.all(Array.from({length:4},worker));return out;
 }
 export async function refreshFeed(env={}){
@@ -34,7 +35,7 @@ export async function onRequestGet({request,env={}}){
  let viewer;try{viewer=await access(request)}catch(e){return response({error:'auth_unavailable'},503)}if(!viewer)return response({error:'forbidden'},403);
  const now=Date.now();
  if(now-cache.at>3*60*60*1000&&env.WORLD_FEED){try{const v=await env.WORLD_FEED.get('latest','json');if(v?.at&&Array.isArray(v.items)&&v.items.length)cache=v}catch(e){}}
- if(now-cache.at>3*60*60*1000){
+ if(now-cache.at>3*60*60*1000&&!(env.WORLD_FEED&&cache.items.length)){
   if(!refreshing)refreshing=(async()=>{
   try{await refreshFeed(env)}catch(e){}
   })().finally(()=>{refreshing=null});

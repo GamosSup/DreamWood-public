@@ -14,5 +14,5 @@ async function verified(request){
  return crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,b64(parts[2]),new TextEncoder().encode(parts[0]+'.'+parts[1]));
 }
 export async function onRequestPost({request,env}){
- try{if(!await verified(request))return new Response('Forbidden',{status:403});if(!env?.AI||!env?.WORLD_FEED)return new Response('Feed bindings unavailable',{status:503});const feed=await refreshFeed(env);return Response.json({updated:new Date(feed.at).toISOString(),count:feed.items.length,failed:feed.failed},{headers:{'cache-control':'no-store'}})}catch(e){return new Response('Refresh unavailable',{status:503,headers:{'cache-control':'no-store'}})}
+ try{if(!await verified(request))return new Response('Forbidden',{status:403});if(!env?.AI||!env?.WORLD_FEED)return new Response('Feed bindings unavailable',{status:503});const feed=await refreshFeed(env);return Response.json({updated:new Date(feed.at).toISOString(),count:feed.items.length,translated:feed.items.filter(x=>x.title_ru).length,failed:feed.failed},{headers:{'cache-control':'no-store'}})}catch(e){return new Response('Refresh unavailable',{status:503,headers:{'cache-control':'no-store'}})}
 }
