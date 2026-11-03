@@ -137,7 +137,7 @@ async function gmLoad(force){
       if(r.error){S.gmErr=r.error.message;return S.gm}
       S.gmErr=null;
       const old=S.gm?JSON.stringify(S.gm.rows.map(x=>[x.id,x.lvl_text,x.cos,gmLv(x.xp).n])):'';
-      const g=gmIndex(r.data||[]);S.gm=g;
+      const g=gmIndex(r.data||[]);S.gm=g;if(window.cmpRefreshPet)cmpRefreshPet();
       try{localStorage.setItem('dw:gm:'+S.me.id,JSON.stringify({rows:g.rows}))}catch(e){}
       gmLevelUp();setTimeout(()=>{try{window.gmWelcomeLegend&&gmWelcomeLegend()}catch(e){}},900);setTimeout(gmPopups,1800);
       if(old&&old!==JSON.stringify(g.rows.map(x=>[x.id,x.lvl_text,x.cos,gmLv(x.xp).n]))&&window.qcRerender)qcRerender();
@@ -304,7 +304,7 @@ async function gmSaveCos(patch){
   const cur={...(me.cos||{}),...patch};Object.keys(cur).forEach(k=>{if(!cur[k])delete cur[k]});
   const r=await sb.rpc('set_my_cos',{p:cur});
   if(r.error){toast('Не сохранилось: '+r.error.message,3500);return false}
-  me.cos=cur;try{localStorage.setItem('dw:gm:'+S.me.id,JSON.stringify({rows:S.gm.rows}))}catch(e){}
+  me.cos=cur;if(window.cmpRefreshPet)cmpRefreshPet();try{localStorage.setItem('dw:gm:'+S.me.id,JSON.stringify({rows:S.gm.rows}))}catch(e){}
   toast('Сохранено ✨',1400);{const h=$('.gmh');if(h){const nx=h.nextElementSibling;if(nx&&nx.classList.contains('shelfc')){const n2=nx.nextElementSibling;nx.remove();if(n2&&n2.classList.contains('gthx'))n2.remove()}h.outerHTML=gmHero(me)}}return true;
 }
 function gmLookTab(box){

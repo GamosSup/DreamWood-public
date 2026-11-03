@@ -5,7 +5,8 @@ const cmpToday=()=>iso(new Date());
 const cmpSeenKey=()=> 'dw-welcome-v2:'+(S.me&&S.me.id||'');
 const cmpPosKey=()=> 'dw-pushok-pos:'+(S.me&&S.me.id||'');
 const cmpWelcomeDue=()=>!!(S.me&&S.me.status==='approved'&&lsGet(cmpSeenKey())!==cmpToday());
-function cmpMascot(sz=74){return `<img class="cmp-mascot" src="stickers/pushok.webp" alt="Пушок" width="${sz}" height="${sz}">`}
+function cmpMascot(sz=74){let cfg=null;try{cfg=petCfg(gmMe())}catch(e){}return `<span class="cmp-mascot" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:${sz}px;height:${sz}px">${cfg?petSvg(cfg,{vb:[0,-70,320,500]}):'🐾'}</span>`}
+function cmpRefreshPet(){const el=document.querySelector('#cmp_help .cmp-mascot');if(el)el.outerHTML=cmpMascot(46)}
 function cmpError(e){return String(e&&e.message||e||'Не получилось сохранить')}
 function cmpQueue(delay=1000){clearTimeout(window._cmpTimer);window._cmpTimer=setTimeout(()=>{window._cmpTimer=null;companionWelcome()},delay)}
 
@@ -13,10 +14,10 @@ function companionWelcome(){
   if(!cmpWelcomeDue()||document.querySelector('.cmpw'))return;
   if(document.querySelector('#tour,.ov,.evtw,.wlc,.gxov')){cmpQueue(1200);return}
   const day=cmpToday(),state={status:null,mood:0,rest:false,note:'',step:0};
-  const ov=document.createElement('div');ov.className='cmpw';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Ежедневное приветствие Пушка');
+  const ov=document.createElement('div');ov.className='cmpw';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Ежедневное приветствие питомца');
   const close=()=>{ov.remove();document.body.style.overflow='';document.removeEventListener('keydown',kd,true)};
   const kd=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation()}};document.addEventListener('keydown',kd,true);
-  const shell=body=>{ov.innerHTML=`<div class="cmp-card"><div class="cmp-top">${cmpMascot()}<div><span class="cmp-kicker">ПУШОК РЯДОМ</span><h2>Привет, ${esc(firstName())}!</h2></div></div><div class="cmp-dots">${[0,1,2].map(i=>`<i class="${state.step>=i?'on':''}"></i>`).join('')}</div><div class="cmp-body">${body}</div><div class="cmp-required">Три коротких шага — и начнём день</div></div>`;document.body.style.overflow='hidden'};
+  const shell=body=>{ov.innerHTML=`<div class="cmp-card"><div class="cmp-top">${cmpMascot()}<div><span class="cmp-kicker">ТВОЙ ПИТОМЕЦ РЯДОМ</span><h2>Привет, ${esc(firstName())}!</h2></div></div><div class="cmp-dots">${[0,1,2].map(i=>`<i class="${state.step>=i?'on':''}"></i>`).join('')}</div><div class="cmp-body">${body}</div><div class="cmp-required">Три коротких шага — и начнём день</div></div>`;document.body.style.overflow='hidden'};
   const finish=dest=>{lsSet(cmpSeenKey(),day);close();clearTimeout(window._cmpTimer);window._cmpTimer=null;cmpReact('happy','День начался — я рядом ✨');if(dest==='mood')go('mood');else if(S.tab==='today')todayView();setTimeout(()=>window.tourMaybe&&tourMaybe(),600)};
   const statusStep=()=>{state.step=0;shell(`<div class="cmp-speech">Кажется, ты сегодня ${state.rest?'на выходном':'на смене'}?</div><p class="muted">Проверим, чтобы график и сводка были верными.</p><div class="two"><button class="btn" data-st="work">☀️ На смене</button><button class="btn ghost" data-st="rest">🌿 На выходном</button></div><div class="err cmp-err"></div>`);
     ov.querySelectorAll('[data-st]').forEach(b=>b.onclick=async()=>{const er=ov.querySelector('.cmp-err');er.textContent='';ov.querySelectorAll('[data-st]').forEach(x=>x.disabled=true);
@@ -71,19 +72,20 @@ function companionMoodEdit(day,current=0){
 const CMP_LINKS=[
   ['today','🏠','Сегодня','смена отметка задания день начать'],['attract','🎡','Аттракционы','статус работает отдыхает поломка маршрут дорожка причина'],['rot','🔄','Ротации','кто где стоит расписание перерыв зона'],['sch','📅','Мой график','выходной смена отпуск даты календарь'],['shift','✅','Чек-листы смены','открытие закрытие проверка'],['mood','💛','Журнал настроения','самочувствие эмоции месяц год прошлый'],['todo','📝','Мой блокнот','дела привычки заметки отдых идеи'],['pet','🐾','Питомец','забота кормить умыть играть лоток камни фон аксессуары наряд'],['game','🏅','Мой профиль','достижения уровень автомат коллеги'],['thanks','💛','Благодарности','сказать спасибо коллеге'],['kb','📚','База знаний','инструкция памятка аттракцион найти'],['team','👥','Команда','контакты сотрудники телефон'],['park','📰','Новости и афиша','события парк что нового'],['req','📨','Заявки','отгул обмен сменами отпуск'],['set','⚙️','Настройки','тема тёмная уведомления профиль']
 ];
+const CMP_ANIM_LINKS=[['home','🏠','Сегодня','сводка день'],['schedule','📅','График','смена расписание'],['requests','📨','Заявки','отгул отпуск'],['posts','📰','Новости и программа','события'],['admissions','🎟️','Допуски','сроки'],['personnel','🔒','Анкеты и навыки','сотрудники навыки'],['knowledge','📚','База знаний','инструкции'],['photos','📷','Фото выходного','фотографии'],['applications','👥','Регистрация','заявки'],['world','🌍','Мировая сводка','новости мир']];
 function cmpReact(kind='happy',text){
   const b=document.getElementById('cmp_help');if(!b)return;const e=CMP_EMOTE[kind]||CMP_EMOTE.happy;
   b.dataset.mood=kind;const badge=b.querySelector('.cmp-emo'),bubble=b.querySelector('.cmp-bubble');if(badge)badge.textContent=e.i;if(bubble)bubble.textContent=text||e.t;
   b.classList.remove('reacting');void b.offsetWidth;b.classList.add('reacting');clearTimeout(window._cmpEmoT);window._cmpEmoT=setTimeout(()=>b.classList.remove('reacting'),3200);
 }
 function companionHelp(){
-  dgxSheet('Пушок · помощник',(box,paint,close)=>{
-    const tip={today:'Здесь — отметка на смене, задания дня и твоя ротация.',rot:'Выбери дату и команду. Расписание идёт по времени; своя зона подсвечена отдельно.',sch:'На календаре видны рабочие дни и отметки отсутствий.',mood:'Выбери любой месяц и нажми на дату: запись можно добавить задним числом.',pet:'Здесь можно заботиться о питомце, менять образ и 2.5D-фон, играть в «Золотой лоток».',game:'Здесь — твои уровень, достижения, коллеги и автомат с вещами.',todo:'Сюда можно записать дело, привычку или идею для будущего отдыха.'}[S.tab]||'Напиши название раздела или действие — я покажу, куда нажать.';
-    box.innerHTML=`<div class="cmp-help">${cmpMascot(68)}<div class="cmp-speech" id="cmp_tip">${esc(tip)}</div></div><div class="cmp-emotions" aria-label="Эмоции Пушка">${Object.entries(CMP_EMOTE).map(([k,e])=>`<button type="button" data-ce="${k}" aria-label="${e.n}"><span>${e.i}</span><small>${e.n}</small></button>`).join('')}</div><input type="search" id="cmp_q" placeholder="Например: график, спасибо, питомец" autocomplete="off"><div class="two cmp-actions"><button class="btn ghost" id="cmp_hello">☀️ Приветствие дня</button><button class="btn ghost" id="cmp_mood">💛 Моё настроение</button></div><div id="cmp_results" class="col"></div>`;
-    const draw=()=>{const q=String(box.querySelector('#cmp_q').value||'').toLowerCase().replace(/ё/g,'е').trim(),L=CMP_LINKS.filter(x=>!q||(x[2]+' '+x[3]).toLowerCase().replace(/ё/g,'е').includes(q));
+  dgxSheet('Питомец · помощник',(box,paint,close)=>{
+    const tip=S.department==='animation'?'Помогу найти график, заявки и другие разделы команды анимации.':{today:'Здесь — отметка на смене, задания дня и твоя ротация.',rot:'Выбери дату и команду. Расписание идёт по времени; своя зона подсвечена отдельно.',sch:'На календаре видны рабочие дни и отметки отсутствий.',mood:'Выбери любой месяц и нажми на дату: запись можно добавить задним числом.',pet:'Здесь можно заботиться о питомце, менять образ и 2.5D-фон, играть в «Золотой лоток».',game:'Здесь — твои уровень, достижения, коллеги и автомат с вещами.',todo:'Сюда можно записать дело, привычку или идею для будущего отдыха.'}[S.tab]||'Напиши название раздела или действие — я покажу, куда нажать.';
+    box.innerHTML=`<div class="cmp-help">${cmpMascot(68)}<div class="cmp-speech" id="cmp_tip">${esc(tip)}</div></div><div class="cmp-emotions" aria-label="Эмоции питомца">${Object.entries(CMP_EMOTE).map(([k,e])=>`<button type="button" data-ce="${k}" aria-label="${e.n}"><span>${e.i}</span><small>${e.n}</small></button>`).join('')}</div><input type="search" id="cmp_q" placeholder="Например: график, спасибо, питомец" autocomplete="off">${S.department==='animation'?'':'<div class="two cmp-actions"><button class="btn ghost" id="cmp_hello">☀️ Приветствие дня</button><button class="btn ghost" id="cmp_mood">💛 Моё настроение</button></div>'}<div id="cmp_results" class="col"></div>`;
+    const draw=()=>{const q=String(box.querySelector('#cmp_q').value||'').toLowerCase().replace(/ё/g,'е').trim(),links=S.department==='animation'?CMP_ANIM_LINKS:CMP_LINKS,L=links.filter(x=>!q||(x[2]+' '+x[3]).toLowerCase().replace(/ё/g,'е').includes(q));
       box.querySelector('#cmp_results').innerHTML=L.map(([k,ic,n,d])=>`<button class="card pad cmp-link" data-cl="${k}"><span>${ic}</span><span><b>${n}</b><small>${esc(d.split(' ').slice(0,5).join(' · '))}</small></span><b>→</b></button>`).join('')||'<div class="card pad muted">Не нашёл такого раздела. Попробуй короче: «график», «смена», «фон».</div>';
-      box.querySelectorAll('[data-cl]').forEach(b=>b.onclick=()=>{close(false);go(b.dataset.cl)})};
-    box.querySelector('#cmp_q').oninput=draw;box.querySelector('#cmp_hello').onclick=()=>{if(!cmpWelcomeDue())return toast('Сегодня приветствие уже пройдено ✨',2200);close(false);companionWelcome()};box.querySelector('#cmp_mood').onclick=()=>{close(false);go('mood')};
+      box.querySelectorAll('[data-cl]').forEach(b=>b.onclick=()=>{close(false);if(S.department==='animation'&&window.animationShellOpen)animationShellOpen(b.dataset.cl);else go(b.dataset.cl)})};
+    box.querySelector('#cmp_q').oninput=draw;const hello=box.querySelector('#cmp_hello'),mood=box.querySelector('#cmp_mood');if(hello)hello.onclick=()=>{if(!cmpWelcomeDue())return toast('Сегодня приветствие уже пройдено ✨',2200);close(false);companionWelcome()};if(mood)mood.onclick=()=>{close(false);go('mood')};
     box.querySelectorAll('[data-ce]').forEach(b=>b.onclick=()=>{const k=b.dataset.ce,e=CMP_EMOTE[k];box.querySelector('#cmp_tip').textContent=e.t;box.querySelectorAll('[data-ce]').forEach(x=>x.classList.toggle('on',x===b));cmpReact(k)});draw();
   },()=>{});
 }
@@ -93,7 +95,7 @@ function cmpPlace(b,left,top,save=false){
 }
 function companionMount(){
   if(!S.me||S.me.status!=='approved'||document.querySelector('#cmp_help'))return;
-  const b=document.createElement('button');b.id='cmp_help';b.className='cmp-help-btn';b.setAttribute('aria-label','Спросить Пушка. Зажми, чтобы переместить');b.innerHTML='<span class="cmp-emo" aria-hidden="true">✨</span>'+cmpMascot(46)+'<span class="cmp-label">Помощь</span><span class="cmp-bubble" aria-live="polite"></span>';document.body.appendChild(b);
+  const b=document.createElement('button');b.id='cmp_help';b.className='cmp-help-btn';b.setAttribute('aria-label','Спросить питомца. Зажми, чтобы переместить');b.innerHTML='<span class="cmp-emo" aria-hidden="true">✨</span>'+cmpMascot(46)+'<span class="cmp-label">Помощь</span><span class="cmp-bubble" aria-live="polite"></span>';document.body.appendChild(b);
   try{const p=JSON.parse(lsGet(cmpPosKey())||'null');if(p&&Number.isFinite(p.left)&&Number.isFinite(p.top))requestAnimationFrame(()=>cmpPlace(b,p.left,p.top))}catch(e){}
   let press=null,hold=0,suppress=0;
   const clear=()=>{clearTimeout(hold);hold=0;b.classList.remove('arming')};
@@ -108,5 +110,5 @@ function companionMount(){
   b.addEventListener('click',e=>{if(Date.now()<suppress){e.preventDefault();e.stopPropagation();return}cmpReact('happy','Чем помочь?');companionHelp()});
   if(!window._cmpResize){window._cmpResize=1;window.addEventListener('resize',()=>{const el=document.getElementById('cmp_help');if(el&&el.style.left)cmpPlace(el,parseFloat(el.style.left),parseFloat(el.style.top))})}
 }
-function companionBoot(tries=0){companionMount();if(!S.me)return;if(!tries){sb.from('mood_entries').select('mood').eq('user_id',S.me.id).eq('day',cmpToday()).maybeSingle().then(r=>{S.moodToday=r.data?.mood||0}).catch(()=>{});cmpQueue(1100)}}
+function companionBoot(tries=0){companionMount();if(!S.me)return;if(!tries){if(typeof gmLoad==='function')gmLoad().then(cmpRefreshPet).catch(()=>{});sb.from('mood_entries').select('mood').eq('user_id',S.me.id).eq('day',cmpToday()).maybeSingle().then(r=>{S.moodToday=r.data?.mood||0}).catch(()=>{});cmpQueue(1100)}}
 VIEWS.mood=moodView;if(!MORE_TABS.includes('mood'))MORE_TABS.splice(MORE_TABS.indexOf('todo')+1,0,'mood');
