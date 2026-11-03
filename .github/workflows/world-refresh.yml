@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
 permissions:
   id-token: write
+concurrency:
+  group: world-feed-refresh
+  cancel-in-progress: false
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -14,11 +17,25 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const token = await core.getIDToken('dreamwood-world-refresh');
-            const response = await fetch('https://dreamwood.pages.dev/api/world-refresh', {
-              method: 'POST', headers: { authorization: `Bearer ${token}` },
-              signal: AbortSignal.timeout(450000)
-            });
-            if (!response.ok) throw new Error(`Обновление не удалось: ${response.status}`);
-            const result = await response.json();
-            core.info(`Обновлено: ${result.count} публикаций, переведено: ${result.translated}; недоступно источников: ${result.failed.length}`);
+            async function call(path, body) {
+              for (let attempt = 0; attempt < 4; attempt++) {
+                const token = await core.getIDToken('dreamwood-world-refresh');
+                const response = await fetch(`https://dreamwood.pages.dev/api/${path}`, {
+                  method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+                  body: JSON.stringify(body), signal: AbortSignal.timeout(180000)
+                });
+                if (response.ok) return response.json();
+                if (response.status !== 503 || attempt === 3) throw new Error(`Не удалось выполнить ${path}: ${response.status}`);
+                await new Promise(resolve => setTimeout(resolve, 10000));
+              }
+            }
+            const feed = await call('world-refresh', {});
+            let offset = 0, translated = feed.translated;
+            while (true) {
+              const batch = await call('world-translate', {run: feed.run, offset});
+              translated = batch.translated;
+              if (batch.next >= batch.total) break;
+              if (batch.next <= offset) throw new Error('Перевод не продвигается');
+              offset = batch.next;
+            }
+            core.info(`Обновлено: ${feed.count} публикаций, переведено: ${translated}; недоступно источников: ${feed.failed.length}`);

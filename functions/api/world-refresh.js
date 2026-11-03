@@ -4,7 +4,7 @@ const ISSUER='https://token.actions.githubusercontent.com';
 const AUDIENCE='dreamwood-world-refresh';
 const REPOSITORY='GamosSup/DreamWood-public';
 const b64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(s.length/4)*4,'=')),c=>c.charCodeAt(0));
-async function verified(request){
+export async function verified(request){
  const m=(request.headers.get('authorization')||'').match(/^Bearer ([A-Za-z0-9_.-]{1,12000})$/);if(!m)return false;
  const parts=m[1].split('.');if(parts.length!==3)return false;
  const header=JSON.parse(new TextDecoder().decode(b64(parts[0]))),claims=JSON.parse(new TextDecoder().decode(b64(parts[1]))),now=Math.floor(Date.now()/1000);
@@ -14,5 +14,5 @@ async function verified(request){
  return crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,b64(parts[2]),new TextEncoder().encode(parts[0]+'.'+parts[1]));
 }
 export async function onRequestPost({request,env}){
- try{if(!await verified(request))return new Response('Forbidden',{status:403});if(!env?.AI||!env?.WORLD_FEED)return new Response('Feed bindings unavailable',{status:503});const feed=await refreshFeed(env);return Response.json({updated:new Date(feed.at).toISOString(),count:feed.items.length,translated:feed.items.filter(x=>x.title_ru).length,failed:feed.failed},{headers:{'cache-control':'no-store'}})}catch(e){return new Response('Refresh unavailable',{status:503,headers:{'cache-control':'no-store'}})}
+ try{if(!await verified(request))return new Response('Forbidden',{status:403});if(!env?.AI||!env?.WORLD_FEED)return new Response('Feed bindings unavailable',{status:503});const feed=await refreshFeed(env,{staged:true});return Response.json({run:feed.run,updated:new Date(feed.at).toISOString(),count:feed.items.length,translated:feed.items.filter(x=>x.title_ru).length,failed:feed.failed},{headers:{'cache-control':'no-store'}})}catch(e){return new Response('Refresh unavailable',{status:503,headers:{'cache-control':'no-store'}})}
 }

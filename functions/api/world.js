@@ -7,21 +7,22 @@ const clean=s=>String(s||'').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace
 const tag=(s,t)=>{const m=s.match(new RegExp('<'+t+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/'+t+'>','i'));return m?clean(m[1]):''};
 export function parseFeed(xml,source){return [...String(xml).matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].map(m=>{let title=tag(m[1],'title'),url=tag(m[1],'link'),date=tag(m[1],'pubDate');let ts=Date.parse(date);if(!title||!/^https:\/\//i.test(url)||!Number.isFinite(ts)||ts<Date.now()-45*864e5||ts>Date.now()+864e5)return null;return {title:title.slice(0,260),url,source,date:new Date(ts).toISOString(),event:EVENT.test(title)&&!TRADE_EVENT.test(title)}}).filter(Boolean)}
 const response=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'private, no-store','x-content-type-options':'nosniff'}});
-let cache={at:0,items:[],failed:[]};
+let cache={at:0,items:[],failed:[]},cacheReadAt=0;
 let refreshing=null;
-async function translateHeadlines(items,ai){
- if(!ai)return items;
- let cursor=0;const out=items.map(x=>({...x})),indices=[...new Set([...out.map((_,i)=>i).slice(0,60),...out.map((x,i)=>x.event?i:-1).filter(i=>i>=0).slice(0,60)])];
- const worker=async()=>{while(cursor<indices.length){const i=indices[cursor++];for(let attempt=0;attempt<3;attempt++){try{const r=await ai.run('@cf/meta/m2m100-1.2b',{text:out[i].title,source_lang:'en',target_lang:'ru'});if(typeof r?.translated_text==='string'&&r.translated_text.trim()){out[i].title_ru=r.translated_text.trim().slice(0,400);break}}catch(e){}if(attempt<2)await new Promise(resolve=>setTimeout(resolve,300*(attempt+1)))}}};
- await Promise.all(Array.from({length:4},worker));return out;
-}
-export async function refreshFeed(env={}){
+export async function refreshFeed(env={},options={}){
  const results=await Promise.allSettled(FEEDS.map(async ([name,url])=>{let r=await fetch(url,{headers:{accept:'application/rss+xml,application/xml,text/xml'},signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error(name);return parseFeed(await r.text(),name).slice(0,30)}));
  const items=results.flatMap(x=>x.status==='fulfilled'?x.value:[]),failed=results.flatMap((x,i)=>x.status==='rejected'?[FEEDS[i][0]]:[]);
  if(!items.length)throw Error('sources_unavailable');
- const seen=new Set(),unique=items.sort((a,b)=>b.date.localeCompare(a.date)).filter(x=>!seen.has(x.url)&&seen.add(x.url)).slice(0,150),next={at:Date.now(),items:await translateHeadlines(unique,env.AI),failed};
+ const seen=new Set(),unique=items.sort((a,b)=>b.date.localeCompare(a.date)).filter(x=>!seen.has(x.url)&&seen.add(x.url)).slice(0,150);let old=null;try{old=env.WORLD_FEED?await env.WORLD_FEED.get('latest','json'):null}catch(e){}const previous=new Map((old?.items||[]).filter(x=>x.title_ru).map(x=>[x.url,x]));for(const item of unique){const match=previous.get(item.url);if(match?.title===item.title)item.title_ru=match.title_ru}const next={at:Date.now(),items:unique,failed};
+ if(options.staged){const run=crypto.randomUUID();await env.WORLD_FEED.put('run:'+run+':0',JSON.stringify(next),{expirationTtl:86400});return {...next,run}}
  if(env.WORLD_FEED)await env.WORLD_FEED.put('latest',JSON.stringify(next));
  cache=next;return next;
+}
+export async function translateFeed(env,run,offset){
+ const feed=await env.WORLD_FEED.get('run:'+run+':'+offset,'json');if(!feed?.items?.length)throw Error('feed_unavailable');
+ const indices=[...new Set([...feed.items.map((_,i)=>i).slice(0,60),...feed.items.map((x,i)=>x.event?i:-1).filter(i=>i>=0).slice(0,60)])],batch=indices.slice(offset,offset+15);
+ let cursor=0;const worker=async()=>{while(cursor<batch.length){const item=feed.items[batch[cursor++]];if(item.title_ru)continue;for(let attempt=0;attempt<3;attempt++){try{const r=await env.AI.run('@cf/meta/m2m100-1.2b',{text:item.title,source_lang:'en',target_lang:'ru'});if(typeof r?.translated_text==='string'&&r.translated_text.trim()){item.title_ru=r.translated_text.trim().slice(0,400);break}}catch(e){}if(attempt<2)await new Promise(resolve=>setTimeout(resolve,300*(attempt+1)))}}};
+ await Promise.all(Array.from({length:3},worker));const next=offset+batch.length;if(next>=indices.length){await env.WORLD_FEED.put('latest',JSON.stringify(feed));cache=feed;cacheReadAt=Date.now()}else await env.WORLD_FEED.put('run:'+run+':'+next,JSON.stringify(feed),{expirationTtl:86400});return {next,total:indices.length,translated:feed.items.filter(x=>x.title_ru).length};
 }
 async function access(request){
  const authorization=request.headers.get('authorization')||'';if(!/^Bearer\s+\S+$/i.test(authorization))return null;
@@ -34,7 +35,7 @@ async function access(request){
 export async function onRequestGet({request,env={}}){
  let viewer;try{viewer=await access(request)}catch(e){return response({error:'auth_unavailable'},503)}if(!viewer)return response({error:'forbidden'},403);
  const now=Date.now();
- if(now-cache.at>3*60*60*1000&&env.WORLD_FEED){try{const v=await env.WORLD_FEED.get('latest','json');if(v?.at&&Array.isArray(v.items)&&v.items.length)cache=v}catch(e){}}
+ if(env.WORLD_FEED&&now-cacheReadAt>60000){try{const v=await env.WORLD_FEED.get('latest','json');if(v?.at&&Array.isArray(v.items)&&v.items.length)cache=v;cacheReadAt=now}catch(e){}}
  if(now-cache.at>3*60*60*1000&&!(env.WORLD_FEED&&cache.items.length)){
   if(!refreshing)refreshing=(async()=>{
   try{await refreshFeed(env)}catch(e){}
