@@ -1,6 +1,6 @@
 // Отраслевые RSS: только ссылки и заголовки, без публикации полных материалов.
 const API='https://bvlwpfmtcdgfsomvwqrp.supabase.co', KEY='sb_publishable_S7nnUv3hs2bBZDhYhEFYew_j_S6s1sO';
-const FEEDS=[['Hotel News Resource · мир','https://www.hotelnewsresource.com/feeds/latest.xml'],['Hotel News Resource · Европа','https://www.hotelnewsresource.com/feeds/region/europe.xml'],['Hotel News Resource · Азия','https://www.hotelnewsresource.com/feeds/region/asia.xml'],['Hotel News Resource · Ближний Восток','https://www.hotelnewsresource.com/feeds/region/middle.xml'],['Hotel News Resource · Америка','https://www.hotelnewsresource.com/feeds/region/north.xml'],['Hospitality Net','https://www.hospitalitynet.org/rss/news.xml'],['Attractions','https://www.amusementsandattractions.com/rss/attractions/news']];
+const FEEDS=[['Hotel News Resource · мир','https://www.hotelnewsresource.com/feeds/latest.xml'],['Hotel News Resource · Европа','https://www.hotelnewsresource.com/feeds/region/europe.xml'],['Hotel News Resource · Азия','https://www.hotelnewsresource.com/feeds/region/asia.xml'],['Hotel News Resource · Ближний Восток','https://www.hotelnewsresource.com/feeds/region/middle.xml'],['Hotel News Resource · Америка','https://www.hotelnewsresource.com/feeds/region/north.xml'],['Hospitality Net','https://www.hospitalitynet.org/rss/news.xml'],['Attractions','https://www.amusementsandattractions.com/rss/attractions/news'],['Attractions Magazine','https://attractionsmagazine.com/feed/'],['Disney Parks Blog','https://disneyparksblog.com/feed/'],['blooloop','https://blooloop.com/feed/']];
 const EVENT=/\b(event|festival|festive|celebration|celebrates|concert|show|parade|holiday|halloween|christmas|carnival|performance|theatre|theater|activity|activities|kids club|family program|family experience|workshop)\b/i;
 const clean=s=>String(s||'').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/\s+/g,' ').trim();
 const tag=(s,t)=>{const m=s.match(new RegExp('<'+t+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/'+t+'>','i'));return m?clean(m[1]):''};
@@ -15,7 +15,7 @@ async function translateHeadlines(items,ai){
  await Promise.all(Array.from({length:4},worker));return out;
 }
 export async function refreshFeed(env={}){
- const results=await Promise.allSettled(FEEDS.map(async ([name,url])=>{let r=await fetch(url,{headers:{accept:'application/rss+xml,application/xml,text/xml'},signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error(name);return parseFeed(await r.text(),name)}));
+ const results=await Promise.allSettled(FEEDS.map(async ([name,url])=>{let r=await fetch(url,{headers:{accept:'application/rss+xml,application/xml,text/xml'},signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error(name);return parseFeed(await r.text(),name).slice(0,30)}));
  const items=results.flatMap(x=>x.status==='fulfilled'?x.value:[]),failed=results.flatMap((x,i)=>x.status==='rejected'?[FEEDS[i][0]]:[]);
  if(!items.length)throw Error('sources_unavailable');
  const seen=new Set(),unique=items.sort((a,b)=>b.date.localeCompare(a.date)).filter(x=>!seen.has(x.url)&&seen.add(x.url)).slice(0,150),next={at:Date.now(),items:await translateHeadlines(unique,env.AI),failed};
