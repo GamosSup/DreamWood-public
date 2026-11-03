@@ -1,0 +1,23 @@
+name: Проверка открытой сборки
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Проверить синтаксис
+        run: |
+          for file in ./*.js; do node --check "$file"; done
+          node --check tools/build-public.cjs
+      - name: Собрать только открытые ресурсы
+        run: node tools/build-public.cjs
+      - name: Проверить отсутствие закрытых каталогов
+        run: |
+          for name in seed supabase docs rotations deploy functions; do
+            test ! -e "safe-public/$name" || exit 1
+          done
