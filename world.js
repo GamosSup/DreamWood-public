@@ -1,0 +1,10 @@
+async function worldView(){
+ const wh=(sub='')=>S.me?.status==='approved'?head('Мировая сводка',sub):`<h1>Мировая сводка</h1><p class="muted">${esc(sub)}</p>`;
+ app.innerHTML=wh('Новости отелей, парков и событий')+'<div class="card pad muted">Загружаем свежие публикации…</div>';
+ let result;try{const {data}=await sb.auth.getSession();if(!data.session)throw Error('Нужно войти заново');const r=await fetch('/api/world',{headers:{authorization:'Bearer '+data.session.access_token}});result=await r.json();if(!r.ok)throw Error('Не удалось загрузить источники')}catch(e){app.innerHTML=wh()+`<div class="card pad">${esc(e.message)}. Попробуй позже.</div>`;return}
+ if(S.me?.status==='pending')sb.rpc('animation_mark_activity',{p_kind:'world'}).then(()=>{},()=>{});
+ const items=result.items||[],when=new Date(result.updated).toLocaleString('ru-RU',{timeZone:'Europe/Moscow',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+ app.innerHTML=wh(result.scope==='manager'?'Новости отрасли и события':'События и программы')+`<div class="card pad muted">Обновлено: ${esc(when)} по Москве. Материалы на языке источника; даты относятся к публикации. ${result.failed?.length?'Часть источников временно недоступна: '+esc(result.failed.join(', '))+'.':''}</div><input id="world-search" type="search" placeholder="Поиск по заголовкам и источникам"><div class="col" id="world-list"></div>`;
+ const list=$('#world-list');function draw(q){q=(q||'').trim().toLocaleLowerCase();const found=items.filter(x=>(x.title+' '+x.source).toLocaleLowerCase().includes(q));list.innerHTML=found.map(x=>`<article class="card pad col"><div class="muted">${esc(x.source)} · ${esc(new Date(x.date).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'}))}${x.event?' · событие':''}</div><b>${esc(x.title)}</b><a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">Открыть источник ↗</a></article>`).join('')||'<div class="card pad muted">Публикаций пока не найдено.</div>'}$('#world-search').oninput=e=>draw(e.target.value);draw('');
+}
+VIEWS.world=worldView;

@@ -1,0 +1,18 @@
+# Working data and deployment output never belong in the public repository.
+supabase/
+docs/
+rotations/
+deploy/
+seed/
+safe-public/
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+*.xlsx
+*.xls
+*.csv
+*.pdf
+*.sql
+*.log
+node_modules/
