@@ -1224,3 +1224,5 @@ html[data-dark="1"] .gnm.n_w3_lagoonnight{color:#95DAD5}
 
 .pw-away{display:block;padding:14px 18px;border-radius:18px;background:#fff9e8;color:#3b2a35;font-weight:800;box-shadow:0 5px 15px #22332222}.pw-pet:has(.pw-away){bottom:55px;animation:none}
 
+
+.anim-home-pet{width:92px;height:112px;display:flex;align-items:center;justify-content:center;overflow:hidden}.anim-home-pet svg{width:100%;height:100%;object-fit:contain}
