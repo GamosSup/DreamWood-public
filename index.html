@@ -6,7 +6,7 @@
 <script>try{var d=document.documentElement;d.dataset.theme=localStorage.getItem("dw-theme")||"forest";var k=localStorage.getItem("dw-dark");d.dataset.dark=(k==="1"||(k==="auto"&&matchMedia("(prefers-color-scheme:dark)").matches))?"1":"0"}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon.svg"><link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="stylesheet" href="/v/fonts" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="/v/fonts"></noscript>
-<link rel="stylesheet" href="styles.css?v=188">
+<link rel="stylesheet" href="styles.css?v=189">
 </head><body>
 <div id="splash" aria-hidden="true"></div>
 <div id="bgs" aria-hidden="true"></div>
@@ -29,6 +29,7 @@
   <div class="ngr dsk">Я</div>
   <button data-tab="todo" class="dsk">📝<span>Мой блокнот</span></button>
   <button data-tab="game" class="dsk">🏅<span>Мой профиль</span></button>
+  <button data-tab="arena" class="dsk">🎮<span>Игры команды</span></button>
   <button data-tab="pet" class="dsk">🐾<span>Питомец</span></button>
   <button data-tab="newbie" class="dsk">🌱<span>Первая неделя</span></button>
   <button data-tab="thanks" class="dsk">💛<span>Благодарности</span></button>
@@ -44,23 +45,24 @@
   <button data-tab="feedback" class="dsk">💡<span>Обратная связь</span><i hidden></i></button>
 </nav>
 <script src="/v/sbjs"></script><script>window.supabase||document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"><\/script>')</script>
-<script src="config.js?v=188"></script><script src="logo.js?v=188"></script><script src="app.js?v=188"></script><script src="qc.js?v=188"></script><script src="dgx.js?v=188"></script><script src="attract.js?v=188"></script><script src="ext1.js?v=188"></script><script src="ext2.js?v=188"></script><script src="ext3.js?v=188"></script><script src="ext4.js?v=188"></script><script src="myfiles.js?v=188"></script><script src="today.js?v=188"></script><script src="roted.js?v=188"></script><script src="xlsx.js?v=188"></script><script src="rep.js?v=188"></script><script src="plan.js?v=188"></script><script src="grow.js?v=188"></script><script src="pet.js?v=188"></script><script src="game.js?v=188"></script><script src="gacha.js?v=188"></script><script src="gacha2.js?v=188"></script><script src="gacha3.js?v=188"></script><script src="gacha4.js?v=188"></script><script src="companion.js?v=188"></script><script src="prof.js?v=188"></script><script src="pet25d.js?v=188"></script><script src="gold.js?v=188"></script><script src="brief.js?v=188"></script><script src="fx.js?v=188"></script><script src="push.js?v=188"></script><script src="tour.js?v=188"></script><script src="personnel.js?v=188"></script><script src="admissions.js?v=188"></script><script src="daily_manager.js?v=188"></script>
-<script src="handover.js?v=188"></script>
-<script src="replacement.js?v=188"></script>
-<script src="pet_world.js?v=188"></script>
-<script src="animation_staging.js?v=188"></script>
-<script src="animation_home.js?v=188"></script>
-<script src="world.js?v=188"></script>
-<script src="competitors.js?v=188"></script>
-<script src="animation_requests.js?v=188"></script>
-<script src="animation_posts.js?v=188"></script>
-<script src="animation_team.js?v=188"></script>
-<script src="animation_personnel.js?v=188"></script>
-<script src="animation_pet.js?v=188"></script>
-<script src="animation_gacha.js?v=188"></script>
-<script src="animation_knowledge.js?v=188"></script>
-<script src="animation_photo.js?v=188"></script>
-<script src="animation_shell.js?v=188"></script>
+<script src="config.js?v=189"></script><script src="logo.js?v=189"></script><script src="app.js?v=189"></script><script src="qc.js?v=189"></script><script src="dgx.js?v=189"></script><script src="attract.js?v=189"></script><script src="ext1.js?v=189"></script><script src="ext2.js?v=189"></script><script src="ext3.js?v=189"></script><script src="ext4.js?v=189"></script><script src="myfiles.js?v=189"></script><script src="today.js?v=189"></script><script src="roted.js?v=189"></script><script src="xlsx.js?v=189"></script><script src="rep.js?v=189"></script><script src="plan.js?v=189"></script><script src="grow.js?v=189"></script><script src="pet.js?v=189"></script><script src="game.js?v=189"></script><script src="gacha.js?v=189"></script><script src="gacha2.js?v=189"></script><script src="gacha3.js?v=189"></script><script src="gacha4.js?v=189"></script><script src="companion.js?v=189"></script><script src="prof.js?v=189"></script><script src="pet25d.js?v=189"></script><script src="gold.js?v=189"></script><script src="brief.js?v=189"></script><script src="fx.js?v=189"></script><script src="push.js?v=189"></script><script src="tour.js?v=189"></script><script src="personnel.js?v=189"></script><script src="admissions.js?v=189"></script><script src="daily_manager.js?v=189"></script>
+<script src="handover.js?v=189"></script>
+<script src="replacement.js?v=189"></script>
+<script src="pet_world.js?v=189"></script>
+<script src="animation_staging.js?v=189"></script>
+<script src="animation_home.js?v=189"></script>
+<script src="world.js?v=189"></script>
+<script src="competitors.js?v=189"></script>
+<script src="animation_requests.js?v=189"></script>
+<script src="animation_posts.js?v=189"></script>
+<script src="animation_team.js?v=189"></script>
+<script src="animation_personnel.js?v=189"></script>
+<script src="animation_pet.js?v=189"></script>
+<script src="animation_gacha.js?v=189"></script>
+<script src="animation_knowledge.js?v=189"></script>
+<script src="animation_photo.js?v=189"></script>
+<script src="arena_sea_ui.js?v=189"></script><script src="arena_party_ui.js?v=189"></script><script src="arena_hub.js?v=189"></script><script src="arena_intro.js?v=189"></script>
+<script src="animation_shell.js?v=189"></script>
 </body></html>
 
 

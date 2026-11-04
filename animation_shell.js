@@ -1,6 +1,6 @@
 (() => {
- const managerItems=[['home','🏠','Сегодня'],['schedule','📅','График'],['requests','📨','Заявки'],['posts','📰','Новости'],['more','☰','Ещё'],['pet','🐾','Питомец'],['admissions','🎟️','Допуски'],['personnel','🔒','Анкеты и навыки'],['knowledge','📚','База знаний'],['photos','📷','Фото выходного'],['applications','👥','Регистрация'],['world','🌍','Мировая сводка']];
- const staffItems=[['home','🏠','Сегодня'],['team','👥','Команда'],['requests','📨','Заявки'],['posts','📰','Новости'],['more','☰','Ещё'],['pet','🐾','Питомец'],['gacha','🎁','Автомат'],['notebook','📝','Блокнот'],['profile','🪪','Моя анкета'],['admissions','🎟️','Мои допуски'],['knowledge','📚','База знаний'],['world','🌍','Мировая сводка']];
+ const managerItems=[['home','🏠','Сегодня'],['schedule','📅','График'],['requests','📨','Заявки'],['posts','📰','Новости'],['more','☰','Ещё'],['pet','🐾','Питомец'],['arena','🎮','Игры команды'],['admissions','🎟️','Допуски'],['personnel','🔒','Анкеты и навыки'],['knowledge','📚','База знаний'],['photos','📷','Фото выходного'],['applications','👥','Регистрация'],['world','🌍','Мировая сводка']];
+ const staffItems=[['home','🏠','Сегодня'],['team','👥','Команда'],['requests','📨','Заявки'],['posts','📰','Новости'],['more','☰','Ещё'],['pet','🐾','Питомец'],['arena','🎮','Игры команды'],['gacha','🎁','Автомат'],['notebook','📝','Блокнот'],['profile','🪪','Моя анкета'],['admissions','🎟️','Мои допуски'],['knowledge','📚','База знаний'],['world','🌍','Мировая сводка']];
  let bar;
  function items(){return isAdmin()?managerItems:staffItems}
  function draw(active){
@@ -12,7 +12,7 @@
  function sync(tab){if(S.department!=='animation'){remove();return}draw(({animation_admin:'home',animation_schedule:'schedule',animation_personnel_admin:'personnel',animation_knowledge_admin:'knowledge',animation_posts_admin:'posts',animation_requests_admin:'requests',animation_photos_admin:'photos',world:'world',staff:'applications'})[tab]||'home')}
  async function open(id){
   S.department='animation';draw(id);app.scrollTop=0;
-  const admin=isAdmin();
+  const admin=isAdmin();if(id==='arena')return arenaHubView();
   if(id==='more'){
    app.innerHTML=head('Все разделы','Команда анимации')+`<div class="anim-menu">${items().filter(x=>x[0]!=='more').map(([key,icon,label])=>`<button class="card anim-menu-item" data-animation-link="${key}"><span>${icon}</span><b>${label}</b><span>›</span></button>`).join('')}</div>`;
    return;
