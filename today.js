@@ -48,7 +48,7 @@ async function todayView(){
   // основные действия рядом с текущей сменой
   h+=`<div class="td-actions" role="group" aria-label="Быстрые действия"><button class="td-action" data-go="rot"><span aria-hidden="true">🔄</span><b>Ротация</b><small>Зоны и время</small></button><button class="td-action" data-go="shift"><span aria-hidden="true">✅</span><b>Моя смена</b><small>Чек-листы дня</small></button><button class="td-action" id="td_fix"><span aria-hidden="true">🛠</span><b>Поломка</b><small>Сообщить о проблеме</small></button><button class="td-action" data-go="sch"><span aria-hidden="true">📅</span><b>Мой график</b><small>Работа и отдых</small></button></div>`;
   {const dj=new Date().getDate()%2===0,tx=dj?dayJoke():dayPhrase();
-   h+=`<div class="card pad dayph" id="td_ph" role="button" tabindex="0" aria-label="Ещё один совет"><div style="flex:1;min-width:0"><div class="phh" id="td_pht">${dj?'🌟 Совет Дримми':'✨ Фраза дня'}</div><div class="pht" id="td_phx">${esc(tx)}</div></div><img src="stickers/mascot-hi.webp" alt="" width="64" height="64"></div>`}
+   h+=`<div class="card pad dayph" id="td_ph" role="button" tabindex="0" aria-label="Ещё один совет"><div style="flex:1;min-width:0"><div class="phh" id="td_pht">${dj?'🌟 Совет питомца':'✨ Фраза дня'}</div><div class="pht" id="td_phx">${esc(tx)}</div></div>${typeof cmpMascot==='function'?cmpMascot(54):'🐾'}</div>`}
   // завтра — когда ротация уже вышла
   const rot2=rt2.data?.data;
   if(rot2&&window.myShift){const m2=myShift(rot2);h+=m2.length?myShiftCard(m2,'Завтра, '+dayLabel(tm)):`<div class="card pad col"><b>🌙 Завтра, ${dayLabel(tm)}</b><div class="muted">Ротация вышла, тебя в ней нет (выходной или не поставили?). Если это ошибка, напиши руководителю.</div></div>`}
