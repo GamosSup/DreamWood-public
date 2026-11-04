@@ -101,12 +101,12 @@ async function goldCare(action){
 async function goldStart(){
  if(GOLD.run||GOLD.loading)return;if(!GOLD.st)await goldRefresh();if(GOLD.st&&GOLD.st.energy<1){goldTired();return}
  GOLD.loading=true;
- try{const r=await sb.rpc('gold_start');if(r.error)throw r.error;GOLD.st.energy=r.data.energy;GOLD.st.event=r.data.event||GOLD.st.event;GOLD.run={id:r.data.run,event:r.data.event||GOLD.st.event,score:0,gems:{},time:30,objects:[],tray:0,combo:0,last:performance.now(),spawn:0,finished:false};goldRunPaint()}
+ try{const r=await sb.rpc('gold_start');if(r.error)throw r.error;GOLD.st.energy=r.data.energy;GOLD.st.event=r.data.event||GOLD.st.event;GOLD.run={id:r.data.run,event:r.data.event||GOLD.st.event,score:0,gems:{},time:30,objects:[],tray:0,combo:0,bestCombo:0,last:performance.now(),spawn:0,finished:false};goldRunPaint()}
  catch(e){GOLD.loading=false;if(/энерг/i.test(e.message||''))goldTired();else toast('Не удалось начать: '+(e.message||e),2600);return}finally{GOLD.loading=false}
 }
 function goldRunPaint(){
  const box=$('#gold_app');if(!box||!GOLD.run)return;
- box.innerHTML=`<div class="gp-hud"><div><small>СЧЁТ</small><b id="gp_score">0</b></div><div><small>ВРЕМЯ</small><b id="gp_time">30</b></div><div><small>ЭНЕРГИЯ</small><b>⚡ ${GOLD.st.energy}</b></div></div><div class="gp-play" id="gp_play"><div class="gp-cave"></div><div class="gp-play-pet">${goldPet(112)}</div><div class="gp-falls" id="gp_falls"></div><div class="gp-tray" id="gp_tray"><i></i><span>〰</span></div><div class="gp-play-hint">Двигай лоток пальцем или мышью</div></div>`;
+ box.innerHTML=`<div class="gp-hud"><div><small>СЧЁТ</small><b id="gp_score">0</b></div><div><small>ВРЕМЯ</small><b id="gp_time">30</b></div><div><small>СЕРИЯ</small><b id="gp_combo">×0</b></div><div><small>ЭНЕРГИЯ</small><b>⚡ ${GOLD.st.energy}</b></div></div><div class="gp-timerbar"><i id="gp_timefill"></i></div><div class="gp-play" id="gp_play"><div class="gp-cave"></div><div class="gp-play-pet">${goldPet(112)}</div><div class="gp-falls" id="gp_falls"></div><div class="gp-tray" id="gp_tray"><i></i><span>〰</span></div><div class="gp-play-hint">Двигай лоток пальцем или мышью · серия без камней подсвечивает лоток</div></div>`;
  const area=$('#gp_play');GOLD.run.tray=area.clientWidth/2;
  const move=e=>{if(!GOLD.run)return;const r=area.getBoundingClientRect(),x=Math.max(46,Math.min(r.width-46,e.clientX-r.left));GOLD.run.tray=x;$('#gp_tray').style.left=x+'px'};
  area.onpointerdown=e=>{area.setPointerCapture&&area.setPointerCapture(e.pointerId);move(e)};area.onpointermove=e=>{if(e.buttons||e.pointerType==='touch')move(e)};
@@ -119,25 +119,26 @@ function goldSpawn(){
  const x=25+Math.random()*Math.max(30,area.clientWidth-50);el.style.left=x+'px';el.style.top='-70px';$('#gp_falls').appendChild(el);R.objects.push({el,x,y:-70,vy:150+Math.random()*115,rock,idx});
 }
 function goldTick(now){
- const R=GOLD.run;if(!R||R.finished)return;const dt=Math.min(.04,(now-R.last)/1000);R.last=now;R.time-=dt;R.spawn-=dt;if(R.spawn<=0){goldSpawn();R.spawn=.48+Math.random()*.24}
+ const R=GOLD.run;if(!R||R.finished)return;const dt=Math.min(.04,(now-R.last)/1000);R.last=now;R.time-=dt;R.spawn-=dt;if(R.spawn<=0){goldSpawn();const pace=Math.max(0,R.time)/30;R.spawn=.31+pace*.2+Math.random()*.16}
  const area=$('#gp_play');if(!area)return;const h=area.clientHeight;
- for(let i=R.objects.length-1;i>=0;i--){const o=R.objects[i];o.y+=o.vy*dt;o.el.style.top=o.y+'px';o.el.style.transform=`rotate(${o.y*(o.rock?.3:.8)}deg)`;
+ for(let i=R.objects.length-1;i>=0;i--){const o=R.objects[i];o.y+=o.vy*dt*(1+(30-Math.max(0,R.time))*.006);o.el.style.top=o.y+'px';o.el.style.transform=`rotate(${o.y*(o.rock?.3:.8)}deg)`;
   if(o.y>h-120&&o.y<h-48&&Math.abs(o.x-R.tray)<68){
-   if(o.rock){R.score=Math.max(0,R.score-25);R.combo=0;goldFloat(o.x,o.y,'−25','bad')}else{const g=GOLD_GEMS[o.idx];R.score+=g[2];R.combo++;R.gems[g[0]]=(R.gems[g[0]]||0)+1;goldFloat(o.x,o.y,'+'+g[2],'good')}
-   o.el.remove();R.objects.splice(i,1);$('#gp_score').textContent=R.score;continue}
+   if(o.rock){R.score=Math.max(0,R.score-25);R.combo=0;goldFloat(o.x,o.y,'−25','bad');area.classList.remove('gp-hit');void area.offsetWidth;area.classList.add('gp-hit')}else{const g=GOLD_GEMS[o.idx];R.score+=g[2];R.combo++;R.bestCombo=Math.max(R.bestCombo,R.combo);R.gems[g[0]]=(R.gems[g[0]]||0)+1;goldFloat(o.x,o.y,'+'+g[2],'good');goldBurst(o.x,o.y);const tray=$('#gp_tray');tray?.classList.remove('catch');if(tray){void tray.offsetWidth;tray.classList.add('catch')}}
+   const combo=$('#gp_combo');if(combo){combo.textContent='×'+R.combo;combo.classList.toggle('gp-combo-hot',R.combo>=4)}area.classList.toggle('combo-hot',R.combo>=4);o.el.remove();R.objects.splice(i,1);$('#gp_score').textContent=R.score;continue}
   if(o.y>h+60){o.el.remove();R.objects.splice(i,1)}}
- const te=$('#gp_time');if(te)te.textContent=Math.max(0,Math.ceil(R.time));
+ const te=$('#gp_time');if(te)te.textContent=Math.max(0,Math.ceil(R.time));const fill=$('#gp_timefill');if(fill)fill.style.width=(Math.max(0,R.time)/30*100)+'%';
  if(R.time<=0){goldFinish();return}R.raf=requestAnimationFrame(goldTick);
 }
 function goldFloat(x,y,text,kind){const box=$('#gp_falls');if(!box)return;const e=document.createElement('b');e.className='gp-float '+kind;e.textContent=text;e.style.left=x+'px';e.style.top=y+'px';box.appendChild(e);setTimeout(()=>e.remove(),700)}
+function goldBurst(x,y){const box=$('#gp_falls');if(!box)return;for(let i=0;i<7;i++){const e=document.createElement('i');e.className='gp-catch-burst';e.style.left=x+'px';e.style.top=y+'px';e.style.setProperty('--a',(i*51)+'deg');box.appendChild(e);setTimeout(()=>e.remove(),600)}}
 async function goldFinish(){
  const R=GOLD.run;if(!R||R.finished)return;R.finished=true;cancelAnimationFrame(R.raf);GOLD.loading=true;
- try{const r=await sb.rpc('gold_finish',{p_run:R.id,p_score:R.score,p_gems:R.gems});if(r.error)throw r.error;GOLD.st=r.data;GOLD.run=null;goldResult(r.data)}
+ try{const r=await sb.rpc('gold_finish',{p_run:R.id,p_score:R.score,p_gems:R.gems});if(r.error)throw r.error;GOLD.st=r.data;const bestCombo=R.bestCombo;GOLD.run=null;goldResult(r.data,bestCombo)}
  catch(e){GOLD.loading=false;R.finished=false;R.time=5;R.last=performance.now();toast('Результат не сохранился, продолжаем: '+(e.message||e),3000);R.raf=requestAnimationFrame(goldTick);return}finally{GOLD.loading=false}
 }
-function goldResult(d){
+function goldResult(d,bestCombo=0){
  const box=$('#gold_app');if(!box)return;const fresh=(d.newach||[]).map(goldAchDef);
- box.innerHTML=`<div class="gp-result"><div class="gp-result-glow">✨</div><div class="gp-kicker">ЛОТОК ЗАКРЫТ</div><h2>${d.score} очков</h2><div class="gp-result-pet">${goldPet(125)}</div><div class="gp-result-grid"><div><b>+${d.score}</b><span>опыта старателя</span></div><div><b>${d.new_level}</b><span>уровень</span></div><div><b>+${d.reward}</b><span>билетов за уровень</span></div></div>${d.event_reward?`<div class="gp-event-win">✨ Редкая находка в событии «${esc(d.event?.name||'Событие дня')}»: <b>+${d.event_reward} билета</b></div>`:''}${d.bonus?`<div class="gp-bonus">💛 Бонус заботы: +${d.bonus}%</div>`:''}${fresh.length?`<div class="gp-newach"><b>Новые достижения</b>${fresh.map(x=>`<span>${x[1]} ${x[2]}</span>`).join('')}</div>`:''}<button class="btn" id="gp_again">${GOLD.st.energy?'Ещё одна игра · −1 ⚡':'Что скажет наставник?'}</button><button class="btn ghost" id="gp_care">Вернуться к питомцу</button></div>`;
+ box.innerHTML=`<div class="gp-result"><div class="gp-result-glow">✨</div><div class="gp-kicker">ЛОТОК ЗАКРЫТ</div><h2>${d.score} очков</h2><div class="gp-result-pet">${goldPet(125)}</div><div class="gp-result-grid"><div><b>+${d.score}</b><span>опыта старателя</span></div><div><b>${d.new_level}</b><span>уровень</span></div><div><b>+${d.reward}</b><span>билетов за уровень</span></div></div>${d.event_reward?`<div class="gp-event-win">✨ Редкая находка в событии «${esc(d.event?.name||'Событие дня')}»: <b>+${d.event_reward} билета</b></div>`:''}${d.bonus?`<div class="gp-bonus">💛 Бонус заботы: +${d.bonus}%</div>`:''}<div class="gp-bonus">✨ Лучшая серия без камней: ×${bestCombo}</div>${fresh.length?`<div class="gp-newach"><b>Новые достижения</b>${fresh.map(x=>`<span>${x[1]} ${x[2]}</span>`).join('')}</div>`:''}<button class="btn" id="gp_again">${GOLD.st.energy?'Ещё одна игра · −1 ⚡':'Что скажет наставник?'}</button><button class="btn ghost" id="gp_care">Вернуться к питомцу</button></div>`;
  $('#gp_again').onclick=()=>GOLD.st.energy?goldStart():goldTired();$('#gp_care').onclick=()=>{GOLD.tab='care';goldPaint()};
  if(d.reward||d.event_reward){toast(`Награды получены: +${(d.reward||0)+(d.event_reward||0)} билет(а) 🎟`,3000);try{dwParty()}catch(e){}}
  if(!GOLD.st.energy)GOLD.timer=setTimeout(()=>{if(!GOLD.run)goldTired()},2200);
