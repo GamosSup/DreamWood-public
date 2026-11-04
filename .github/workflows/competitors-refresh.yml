@@ -4,6 +4,7 @@ on:
     - cron: '13 8 * * *'
   workflow_dispatch:
 permissions:
+  contents: read
   id-token: write
 concurrency:
   group: competitors-refresh
@@ -11,18 +12,32 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Обновить конкурентную сводку
+      - uses: actions/checkout@v4
+      - name: Собрать источники и сохранить конкурентную сводку
         uses: actions/github-script@v7
         with:
           script: |
+            const path = require('node:path');
+            const { pathToFileURL } = require('node:url');
+            const endpoint = 'https://dreamwood.pages.dev/api/competitors-refresh';
             const token = await core.getIDToken('dreamwood-competitors-refresh');
-            const response = await fetch('https://dreamwood.pages.dev/api/competitors-refresh', {
-              method: 'POST', headers: { authorization: `Bearer ${token}` },
-              signal: AbortSignal.timeout(240000)
-            });
-            if (!response.ok) throw new Error(`Обновление не выполнено: ${response.status}`);
-            const result = await response.json();
-            core.info(`Локаций: ${result.competitors}; публикаций: ${result.news}; важных событий: ${result.important}`);
+            const headers = { authorization: `Bearer ${token}` };
+            const previousResponse = await fetch(endpoint, { headers, signal: AbortSignal.timeout(30000) });
+            if (!previousResponse.ok) throw new Error(`Прежняя сводка недоступна: ${previousResponse.status}`);
+            const previous = await previousResponse.json();
+            const { refreshCompetitors } = await import(pathToFileURL(path.resolve('functions/api/competitors.js')).href);
+            const result = await refreshCompetitors({ WORLD_FEED: {
+              get: async () => previous,
+              put: async () => {}
+            } });
+            core.info(`Собрано локаций: ${result.competitors.length}; публикаций: ${result.news.length}; важных событий: ${result.important.length}`);
             core.info(`Недоступные источники: ${result.failed?.length ? result.failed.join(' | ') : 'нет'}`);
+            const response = await fetch(endpoint, {
+              method: 'POST', headers: { ...headers, 'content-type': 'application/json' },
+              body: JSON.stringify(result), signal: AbortSignal.timeout(30000)
+            });
+            if (!response.ok) throw new Error(`Сводка не сохранена: ${response.status}`);
+            const saved = await response.json();
+            core.info(`Сохранено локаций: ${saved.competitors}; публикаций: ${saved.news}; важных событий: ${saved.important}`);
