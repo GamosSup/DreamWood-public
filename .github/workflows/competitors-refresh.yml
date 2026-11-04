@@ -25,3 +25,4 @@ jobs:
             if (!response.ok) throw new Error(`Обновление не выполнено: ${response.status}`);
             const result = await response.json();
             core.info(`Локаций: ${result.competitors}; публикаций: ${result.news}; важных событий: ${result.important}`);
+            core.info(`Недоступные источники: ${result.failed?.length ? result.failed.join(' | ') : 'нет'}`);
