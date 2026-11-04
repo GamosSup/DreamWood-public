@@ -8,7 +8,7 @@
   bar.innerHTML='<div class="animation-brand"><span>🎭</span><div><b>Анимация</b><small>Команда отеля</small></div></div>'+items().map(([id,icon,label],i)=>`${i===0?'<div class="animation-group">Рабочее пространство</div>':i===5?'<div class="animation-group">Разделы команды</div>':''}<button type="button" data-animation-page="${id}" class="${i>4?'animation-desktop ':''}${id===active?'on':''}" ${id===active?'aria-current="page"':''}>${icon}<span>${label}</span></button>`).join('');
   bar.hidden=false;nav.hidden=true;document.body.classList.add('animation-mode');
  }
- function remove(){if(bar)bar.hidden=true;document.body.classList.remove('animation-mode');if(S.me&&S.me.status!=='pending')nav.hidden=false}
+ function remove(){if(bar)bar.hidden=true;document.getElementById('anim-pet-helper')?.remove();document.getElementById('anim-pet-helper-panel')?.remove();document.body.classList.remove('animation-mode');if(S.me&&S.me.status!=='pending')nav.hidden=false}
  function sync(tab){if(S.department!=='animation'){remove();return}draw(({animation_admin:'home',animation_schedule:'schedule',animation_personnel_admin:'personnel',animation_knowledge_admin:'knowledge',animation_posts_admin:'posts',animation_requests_admin:'requests',animation_photos_admin:'photos',world:'world',staff:'applications'})[tab]||'home')}
  async function open(id){
   S.department='animation';draw(id);app.scrollTop=0;
