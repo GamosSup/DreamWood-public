@@ -46,7 +46,7 @@ async function persTeamView(){
 }
 VIEWS.personnel=persMyView;VIEWS.personnel_team=persTeamView;
 const persStartOriginal=startApp;
-startApp=function(){persStartOriginal();setTimeout(()=>persMaybe().catch(()=>{}),1000);setTimeout(()=>holidayGiftWelcome().catch(()=>{}),2500)};
+startApp=function(){persStartOriginal();setTimeout(()=>persMaybe().catch(()=>{}),1000)};
 
 PET_HA.push(['h_holiday_lantern','Фонарик Хеллоуина','spec:halloween_2026_team']);
 PET_GEAR.h_holiday_lantern=`<path d="M112 205Q111 154 150 150Q180 139 210 150Q250 154 248 205Z" fill="#4A2858" stroke="#27162E" stroke-width="4"/><path d="M118 191Q180 179 242 191" fill="none" stroke="#F49A36" stroke-width="9"/><path d="M167 152Q165 124 190 112Q185 135 190 150" fill="#76A94F" stroke="#375C2A" stroke-width="3"/><circle cx="180" cy="185" r="18" fill="#FF9E29" stroke="#8D4215" stroke-width="3"/><path d="M170 181l5 3-5 3zm20 0-5 3 5 3zm-17 12q7 6 14 0" fill="#54212C" stroke="#54212C" stroke-width="2"/><path d="M129 155l5 6 7 1-5 5 1 7-7-3-6 3 1-7-5-5 7-1z" fill="#FFD16A"/>`;

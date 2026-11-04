@@ -199,6 +199,7 @@ async function gmGachaTab(box){
     const byR=[1,2,3,4,5,6].map(r=>({r,L:GXI.filter(x=>x[1]===r)}));
     const left=Math.max(1,10-(inf.pity||0));
     box.innerHTML=`<div class="card pad col gxm"><div class="gxst"><span>🎟 Билетов <b id="gx_t">${inf.tickets}</b></span><span>🏅 Золотых <b>${inf.gold||0}</b></span></div>
+     <div class="two"><button type="button" class="btn ghost" id="gx_give_top">🎟 Подарить билеты</button><button type="button" class="btn ghost" id="gx_item_top">🎁 Подарить вещь</button></div>
      ${gxMachine()}
      <button class="btn" id="gx_pull" ${inf.tickets>0?'':'disabled'}>${inf.tickets>0?'Крутить ручку · 1 🎟':'Нет билетов'}</button>
      ${(inf.gold||0)>0?`<button class="btn gxgold" id="gx_gold">🏅 Золотая крутка · 1 🏅</button><div class="muted" style="text-align:center">Золотая: эпическая 45%, мифическая 30%, легендарная 24%, тайна 1%.</div>`:''}
@@ -214,6 +215,8 @@ async function gmGachaTab(box){
     <div class="card pad col"><b>Коллекция · ${have} из ${rows}</b><div class="muted">Нажми на вещь, которая у тебя есть, чтобы надеть или подарить коллеге.</div></div>
     ${byR.map(({r,L})=>`<details class="area gmg" ${r<=2?'open':''}><summary class="ah" style="background:var(--tab)"><span class="ahn"><i class="gxdot" style="background:${gxRc(r)}"></i> ${GX_R[r][0]}</span><span class="pill" style="background:#FFFDF9;align-self:center">${L.filter(x=>gxOwn(x[0])).length} / ${L.length}</span></summary><div class="gops" style="padding:8px">${L.map(([id,,k,n])=>{const ow=gxOwn(id),secret=r===6;return `<button class="gop gxit${ow?'':' lk'}" data-i="${id}"><span class="gopv">${ow?gxPrev(id,78):'<span style="font-size:30px;opacity:.5">?</span>'}</span><span class="gopn">${ow||!secret?esc(n):'???'}</span>${ow?'':'<span class="gopl">пока нет</span>'}</button>`}).join('')}</div></details>`).join('')}`;
     box.querySelector('#gx_pull').onclick=()=>pull(false);
+    box.querySelector('#gx_give_top').onclick=()=>{const target=box.querySelector('#gx_to');if(target){target.scrollIntoView({behavior:'smooth',block:'center'});target.focus({preventScroll:true})}};
+    box.querySelector('#gx_item_top').onclick=()=>{const items=GXI.filter(x=>gxOwn(x[0]));if(!items.length)return toast('Пока нет вещей, которые можно подарить',2400);dgxSheet('Выбери вещь для подарка',(panel,_render,close)=>{panel.innerHTML=`<div class="muted">Выбери вещь из своей коллекции. Перед передачей можно будет выбрать получателя.</div><div class="gops">${items.map(([id,,k,n])=>`<button type="button" class="gop gxit" data-gift-item="${esc(id)}"><span class="gopv">${gxPrev(id,60)}</span><span class="gopn">${esc(n)}</span></button>`).join('')}</div>`;panel.querySelectorAll('[data-gift-item]').forEach(button=>button.onclick=()=>{const id=button.dataset.giftItem;close(false);gxItemMenu(id,()=>{if(box.isConnected)paint()})})},()=>{})};
     const gv=box.querySelector('#gx_give');
     if(gv)gv.onclick=async()=>{
       const to=box.querySelector('#gx_to').value,n=parseInt(box.querySelector('#gx_n').value,10),er=box.querySelector('#gx_ge');

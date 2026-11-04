@@ -505,7 +505,8 @@ const GM_PCOS=[
  {sp:'bunny',ha:'h_horns',mo:'m_t',bk:'b_bat',ex:'x_w'},
  {sp:'dragon',bk:'b_bat',ha:'h_crown',gl:'g_sun',mo:'m_g'}];
 const GM_PTAG={fox:'хитрый и шустрый',bear:'добряк и силач',bunny:'ловкая и быстрая',dragon:'огнедышащий, но добрый',potato:'простая картошка с глазами, зато своя',leopard:'единственный в своём роде',unicorn:'приручить его смогли только супервайзеры; любит кофе, наушники и музыку'};
-function gmPopups(){if(gmParadeOn())gmParadePopup();else gmPetPopup()}
+// Праздничное вступление завершено; предметы и полученные награды остаются в коллекции.
+function gmPopups(){}
 // приветственное окно ивента: у всех при первом заходе после обновления (новички видят его сразу после обучения)
 function gmParadePopup(tries=0){
   const me=gmMe();if(!me||!S.me||typeof petCfg!=='function'||S.gmPetShown)return;
