@@ -182,13 +182,14 @@ S.ct={q:''};
 async function contactsView(){
   await ensurePeople(true);
   const ppl=S.dg.people;
-  let h=head('Контакты','Телефоны команды')+subBar('team','contacts');
+  let h=head('Команда','Контакты и благодарности')+subBar('team','contacts');
   h+=`<input id="ct_q" type="search" placeholder="🔍 Поиск по имени" value="${esc(S.ct.q)}"><div id="ct_list"></div>`;
   app.innerHTML=h;
   const draw=()=>{
     const q=S.ct.q.trim().toLowerCase(),rows=ppl.filter(p=>!q||(p.full_name||'').toLowerCase().includes(q));
     const groups=[...Object.keys(TN),''].map(t=>[t,rows.filter(p=>(p.team||'')===t)]).filter(g=>g[1].length);
-    $('#ct_list').innerHTML=groups.map(([t,g])=>`<div class="card"><div class="zh" style="background:var(--tab)">${t?TN[t]:'Руководство и остальные'} · ${g.length}</div>${g.map(p=>`<div class="otr" style="padding:10px 16px"><span style="display:flex;gap:10px;align-items:center">${av(p,44)}<span><b>${typeof gmName==='function'?gmName(p.full_name||'?',gmRowOf(p)):esc(p.full_name||'?')}</b>${p.position?` <span class="sr">${esc(p.position)}</span>`:(['manager','admin'].includes(p.role)?' <span class="sr">Руководитель</span>':'')}${p.tab_no?`<br><span class="muted">таб. № ${esc(p.tab_no)}</span>`:''}${typeof gmTitleHtml==='function'?gmTitleHtml(gmRowOf(p)):''}</span></span>${p.phone?`<a class="btn" style="display:flex;align-items:center;text-decoration:none;min-height:40px;padding:0 14px" href="tel:${esc(p.phone.replace(/[^\d+]/g,''))}">📞 ${esc(p.phone)}</a>`:'<span class="muted">нет номера</span>'}</div>`).join('')}</div>`).join('')||'<div class="card pad muted">Никого не нашли.</div>';
+    $('#ct_list').innerHTML=groups.map(([t,g])=>`<section style="margin-top:18px"><div class="zh" style="margin-bottom:8px">${t?TN[t]:'Руководство и остальные'} · ${g.length}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px">${g.map(p=>`<div class="card pad" style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px;align-items:center">${av(p,44)}<div style="flex:1;min-width:0"><b>${typeof gmName==='function'?gmName(p.full_name||'?',gmRowOf(p)):esc(p.full_name||'?')}</b>${p.position?`<div class="muted">${esc(p.position)}</div>`:(['manager','admin'].includes(p.role)?'<div class="muted">Руководитель</div>':'')}${p.tab_no?`<div class="muted">таб. № ${esc(p.tab_no)}</div>`:''}${typeof gmTitleHtml==='function'?gmTitleHtml(gmRowOf(p)):''}</div>${p.id!==S.me.id?`<button class="btn ghost" data-thank="${esc(p.id)}" aria-label="Сказать спасибо: ${esc(p.full_name||'коллеге')}" title="Сказать спасибо" style="min-width:44px;min-height:44px;padding:8px">💛</button>`:''}</div>${p.phone?`<a style="text-decoration:none" href="tel:${esc(p.phone.replace(/[^\d+]/g,''))}">📞 ${esc(p.phone)}</a>`:'<span class="muted">нет номера</span>'}</div>`).join('')}</div></section>`).join('')||'<div class="card pad muted">Никого не нашли.</div>';
+    $('#ct_list').querySelectorAll('[data-thank]').forEach(b=>b.onclick=()=>thanksSend(b.dataset.thank,()=>contactsView()));
   };
   draw();
   $('#ct_q').oninput=e=>{S.ct.q=e.target.value;draw()};

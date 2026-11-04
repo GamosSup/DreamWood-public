@@ -149,23 +149,25 @@ async function thanksView(){
   $('#th_new').onclick=()=>thanksSend();
   app.querySelectorAll('[data-td]').forEach(b=>b.onclick=async()=>{if(!confirm('Удалить благодарность?'))return;await sb.from('thanks').delete().eq('id',b.dataset.td);keepScroll(thanksView)});
 }
-function thanksSend(){
-  const f={to:null,st:THX_ST[0]};
+function thanksSend(recipient=null,after=thanksView){
+  const f={to:recipient,st:THX_ST[0]};
   dgxSheet('💛 Сказать спасибо',async(box,paint,close)=>{
     await ensurePeople();const people=S.dg.people.filter(p=>p.id!==S.me.id);
-    box.innerHTML=`<label>Кому${empSearchHtml(people,f.to)}</label>
+    const selected=people.find(p=>String(p.id)===String(f.to));
+    if(recipient&&!selected){toast('Сотрудник недоступен');close(false);return}
+    box.innerHTML=`<label>Кому${selected?`<div class="card pad"><b>${esc(selected.full_name)}</b></div>`:empSearchHtml(people,f.to)}</label>
     <label>За что<textarea id="th_t" maxlength="300" placeholder="Например: выручил на Плюще, когда не хватало людей"></textarea></label>
     <div class="plf">${THX_PH.map(x=>`<button data-ph="${x}">${x}</button>`).join('')}</div>
     <div><b style="font-size:14px">Стикер</b><div class="plf hbic" style="margin-top:6px">${THX_ST.map(s=>`<button data-st="${s}" class="${f.st===s?'on':''}">${s}</button>`).join('')}</div></div>
     <button class="btn" id="th_s">Отправить</button><div class="err" id="th_e"></div>`;
-    empSearchBind(box,people,id=>{f.to=id;box.querySelector('#empq').value=pplById(id).full_name;box.querySelector('#empl').hidden=true});
+    if(!selected)empSearchBind(box,people,id=>{f.to=id;box.querySelector('#empq').value=pplById(id).full_name;box.querySelector('#empl').hidden=true});
     box.querySelectorAll('[data-ph]').forEach(b=>b.onclick=()=>{const t=box.querySelector('#th_t');t.value=(t.value?t.value+'. ':'')+b.dataset.ph;t.focus()});
     box.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{f.st=b.dataset.st;box.querySelectorAll('[data-st]').forEach(z=>z.classList.toggle('on',z===b))});
     box.querySelector('#th_s').onclick=async e=>{const t=box.querySelector('#th_t').value.trim(),er=box.querySelector('#th_e');
       if(!f.to)return er.textContent='Выбери коллегу из списка';if(!t)return er.textContent='Напиши пару слов';
       e.target.disabled=true;const r=await sb.from('thanks').insert({to_user:f.to,body:t,sticker:f.st});
       if(r.error){e.target.disabled=false;return er.textContent='Не получилось: '+r.error.message}
-      dwParty();toast('💛 Спасибо отправлено!');if(window.dqFill)dqFill(true);close(false);thanksView()};
-  },()=>thanksView());
+      dwParty();toast('💛 Спасибо отправлено!');if(window.dqFill)dqFill(true);close(false);after()};
+  },()=>after());
 }
 VIEWS.newbie=newbieView;VIEWS.thanks=thanksView;
