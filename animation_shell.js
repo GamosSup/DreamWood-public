@@ -1,5 +1,5 @@
 (() => {
- const managerItems=[['home','🏠','Сегодня'],['schedule','📅','График'],['requests','📨','Заявки'],['posts','📰','Новости'],['more','☰','Ещё'],['admissions','🎟️','Допуски'],['personnel','🔒','Анкеты и навыки'],['knowledge','📚','База знаний'],['photos','📷','Фото выходного'],['applications','👥','Регистрация'],['world','🌍','Мировая сводка']];
+ const managerItems=[['home','🏠','Сегодня'],['schedule','📅','График'],['requests','📨','Заявки'],['posts','📰','Новости'],['more','☰','Ещё'],['pet','🐾','Питомец'],['admissions','🎟️','Допуски'],['personnel','🔒','Анкеты и навыки'],['knowledge','📚','База знаний'],['photos','📷','Фото выходного'],['applications','👥','Регистрация'],['world','🌍','Мировая сводка']];
  const staffItems=[['home','🏠','Сегодня'],['team','👥','Команда'],['requests','📨','Заявки'],['posts','📰','Новости'],['more','☰','Ещё'],['pet','🐾','Питомец'],['gacha','🎁','Автомат'],['notebook','📝','Блокнот'],['profile','🪪','Моя анкета'],['admissions','🎟️','Мои допуски'],['knowledge','📚','База знаний'],['world','🌍','Мировая сводка']];
  let bar;
  function items(){return isAdmin()?managerItems:staffItems}
@@ -17,7 +17,7 @@
    app.innerHTML=head('Все разделы','Команда анимации')+`<div class="anim-menu">${items().filter(x=>x[0]!=='more').map(([key,icon,label])=>`<button class="card anim-menu-item" data-animation-link="${key}"><span>${icon}</span><b>${label}</b><span>›</span></button>`).join('')}</div>`;
    return;
   }
-  if(admin){const routes={home:'animation_admin',schedule:'animation_schedule',requests:'animation_requests_admin',posts:'animation_posts_admin',personnel:'animation_personnel_admin',knowledge:'animation_knowledge_admin',photos:'animation_photos_admin',applications:'staff',world:'world'};if(id==='admissions')return animationAdmissionsView(true);if(routes[id])return go(routes[id]);return}
+  if(admin){const routes={home:'animation_admin',schedule:'animation_schedule',requests:'animation_requests_admin',posts:'animation_posts_admin',personnel:'animation_personnel_admin',knowledge:'animation_knowledge_admin',photos:'animation_photos_admin',applications:'staff',world:'world'};if(id==='pet')return goldView();if(id==='admissions')return animationAdmissionsView(true);if(routes[id])return go(routes[id]);return}
   const routes={home:()=>animationHome(),team:()=>animationTeamView(),requests:()=>animationRequestsView(false),posts:()=>animationPostsView(false),pet:()=>animationPetView(),gacha:()=>animationGachaView(),profile:()=>animationProfileView(false),admissions:()=>animationAdmissionsView(false),knowledge:()=>animationKnowledgeView(false),world:()=>worldView(),notebook:()=>{sb.rpc('animation_mark_activity',{p_kind:'notebook'}).then(()=>{},()=>{});return noteView()}};
   if(routes[id])await routes[id]();
  }
