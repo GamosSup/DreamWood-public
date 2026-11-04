@@ -7,8 +7,8 @@
 <script>
 const K='sb_publishable_S7nnUv3hs2bBZDhYhEFYew_j_S6s1sO',D='https://bvlwpfmtcdgfsomvwqrp.supabase.co';
 const T=[
- ['Сайт dreamwood.pages.dev','/v/sbjs?d='+Date.now(),{},'Скрипт приложения грузится с нашего сайта'],
- ['База через сайт (основной путь)','/sb/auth/v1/health?d='+Date.now(),{headers:{apikey:K}},'Через dreamwood.pages.dev/sb'],
+ ['Текущий сайт','/v/sbjs?d='+Date.now(),{},'Скрипт приложения грузится с нашего сайта'],
+ ['База через сайт (основной путь)','/sb/auth/v1/health?d='+Date.now(),{headers:{apikey:K}},'Через текущий адрес сайта'],
  ['База напрямую (запасной путь)',D+'/auth/v1/health',{headers:{apikey:K}},'Напрямую supabase.co'],
  ['Шрифты','/v/fonts?d='+Date.now(),{},'Необязательно: без них приложение работает'],
  ['Файлы и фото (Google Диск)','/api/link',{},'Ждём ответ 401 — это нормально, значит сервер на связи']
