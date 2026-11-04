@@ -28,7 +28,7 @@ function companionWelcome(){
       else if(!state.rest&&state.status==='rest')state.note='По графику была смена, но отдых тоже важен. Если планы просто изменились — всё записал. Если это ошибка, поправить отметку поможет руководитель.';
       else state.note=state.status==='work'?'Отметил выход на смену. Спокойного и доброго дня!':'Отметил выходной. Пусть сегодня будет время на то, что восстанавливает.';
       moodStep()})};
-  const moodStep=()=>{state.step=1;shell(`<div class="cmp-speech">${esc(state.note)}</div><h3>Как ты себя чувствуешь?</h3><p class="muted">Это личная запись: коллеги её не видят. Потом можно посмотреть любой прошлый месяц.</p><div class="cmp-moods">${CMP_MOOD.slice(1).map((m,i)=>`<button data-mood="${i+1}" aria-label="${m.n}"><span>${m.i}</span><small>${m.n}</small></button>`).join('')}</div><div class="err cmp-err"></div>`);
+  const moodStep=()=>{state.step=1;shell(`<div class="cmp-speech">${esc(state.note)}</div><h3>Как ты себя чувствуешь?</h3><p class="muted">Коллеги твою запись не видят. Если выберешь «Тяжело», руководитель получит сигнал, чтобы поддержать тебя. Потом можно посмотреть любой прошлый месяц.</p><div class="cmp-moods">${CMP_MOOD.slice(1).map((m,i)=>`<button data-mood="${i+1}" aria-label="${m.n}"><span>${m.i}</span><small>${m.n}</small></button>`).join('')}</div><div class="err cmp-err"></div>`);
     ov.querySelectorAll('[data-mood]').forEach(b=>b.onclick=async()=>{const n=+b.dataset.mood;ov.querySelectorAll('[data-mood]').forEach(x=>x.disabled=true);const r=await sb.rpc('mood_set',{p_day:day,p_mood:n});
       if(r.error){ov.querySelector('.cmp-err').textContent=cmpError(r.error);ov.querySelectorAll('[data-mood]').forEach(x=>x.disabled=false);return}
       state.mood=n;S.moodToday=n;tasksStep()})};
@@ -62,7 +62,7 @@ async function moodView(){
 }
 function companionMoodEdit(day,current=0){
   dgxSheet('Настроение · '+dayLabel(day),(box,paint,close)=>{
-    box.innerHTML=`<div class="muted">Запись видна только тебе. Её можно изменить в любой момент.</div><div class="cmp-moods mood-edit">${CMP_MOOD.slice(1).map((m,i)=>`<button data-me="${i+1}" class="${current===i+1?'on':''}"><span>${m.i}</span><small>${m.n}</small></button>`).join('')}</div><div class="err" id="me_err"></div>`;
+    box.innerHTML=`<div class="muted">Коллеги твою запись не видят. Если выберешь «Тяжело», руководитель получит сигнал, чтобы поддержать тебя. Запись можно изменить в любой момент.</div><div class="cmp-moods mood-edit">${CMP_MOOD.slice(1).map((m,i)=>`<button data-me="${i+1}" class="${current===i+1?'on':''}"><span>${m.i}</span><small>${m.n}</small></button>`).join('')}</div><div class="err" id="me_err"></div>`;
     box.querySelectorAll('[data-me]').forEach(b=>b.onclick=async()=>{box.querySelectorAll('[data-me]').forEach(x=>x.disabled=true);const r=await sb.rpc('mood_set',{p_day:day,p_mood:+b.dataset.me});
       if(r.error){box.querySelector('#me_err').textContent=cmpError(r.error);box.querySelectorAll('[data-me]').forEach(x=>x.disabled=false);return}
       if(day===cmpToday())S.moodToday=+b.dataset.me;close(false);if(S.tab==='mood')moodView();toast('Настроение сохранено 💛',1800)});
