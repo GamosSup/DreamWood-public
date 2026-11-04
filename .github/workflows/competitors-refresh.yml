@@ -20,7 +20,7 @@ jobs:
             const token = await core.getIDToken('dreamwood-competitors-refresh');
             const response = await fetch('https://dreamwood.pages.dev/api/competitors-refresh', {
               method: 'POST', headers: { authorization: `Bearer ${token}` },
-              signal: AbortSignal.timeout(180000)
+              signal: AbortSignal.timeout(240000)
             });
             if (!response.ok) throw new Error(`Обновление не выполнено: ${response.status}`);
             const result = await response.json();
