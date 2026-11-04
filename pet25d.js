@@ -116,7 +116,10 @@ function p25Scene(bg,cfg){
 }
 function gmPet25DPet(row,sz=190,cfg){
   const full=cfg||petCfg(row);if(!full)return`<img src="stickers/mascot-hi.webp" alt="" width="120" height="120" style="object-fit:contain">`;
-  const vb=PET_VB,base={...full,bk:'',ha:full.ha==='h_shark'?full.ha:'',gl:'',nk:'',ch:'',hd:'',cm:''},gear=petGear(full),id='p25pet'+(++P25_N)+'_';
+  const vb=PET_VB;
+  // Объёмный образ уже содержит весь гардероб: не разбираем его повторно на векторные слои.
+  if(typeof petPlushCanRender==='function'&&petPlushCanRender(full))return`<div class="d25pet drm pan" style="width:${sz}px;height:${Math.round(sz*vb[3]/vb[2])}px"><div class="d25-base">${petSvg(full,{vb,pn:(row.cos||{}).pname||''})}</div></div>`;
+  const base={...full,bk:'',ha:full.ha==='h_shark'?full.ha:'',gl:'',nk:'',ch:'',hd:'',cm:''},gear=petGear(full),id='p25pet'+(++P25_N)+'_';
   const bcv=(PET_BC.find(x=>x[0]===full.bc)||PET_BC[0])[3],solid=/^#/.test(bcv),baseHex=solid?bcv:PET_GRAD[bcv]?PET_GRAD[bcv].base:(bcv==='gold'?'#EDBE46':bcv==='night'?'#2F3F9A':'#9A7BFF'),D=pMix(baseHex,'#1a1030',.45),F=`url(#${id}b)`,hcv=(PET_HC.find(x=>x[0]===full.hc)||PET_HC[0])[3],ecv=(PET_EC.find(x=>x[0]===full.ec)||PET_EC[0])[3],defs=petDefs(id,bcv,hcv,ecv),svg=inner=>`<svg class="d25-layer" viewBox="${vb.join(' ')}" width="100%" height="100%" aria-hidden="true">${inner}</svg>`;
   const back=full.bk?`<div class="d25-back">${svg(defs+petBack(full.bk,'',F,D,pMix(baseHex,'#ffffff',.3)))}</div>`:'';
   const handSvg=full.hd?petHandFit(full.hd,petHandItem(full.hd).replace('PETP',id+'p')):'';
